@@ -82,14 +82,6 @@ const ManageUser = () => {
 
     // Handle Insert User Account
     try {
-      // Use signInWithOtp
-      // const { error: invitationError } = await supabase.auth.signInWithOtp({
-      //   //reference: https://supabase.com/docs/reference/javascript/auth-signinwithotp
-      //   email,
-      //   options: {
-      //     emailRedirectTo: "http://localhost:3000/auth/verification",
-      //   },
-      // });
       const { error: invitationError } = await supabase.auth.signUp({
         email,
         password: "12345678",

@@ -21,14 +21,14 @@ import {
 
 import { FaUser } from "react-icons/fa";
 import { ChevronUp } from "lucide-react";
-import { Profile } from "@/pages/admin/manage-user";
+// import { Profile } from "@/pages/admin/manage-user";
 
 interface AppSidebarProps {
-  profile: Profile | null;
+  username: string | null;
   handleSignOut: () => Promise<void>;
 }
 
-export function AppSidebar({ profile, handleSignOut }: AppSidebarProps) {
+export function AppSidebar({ username, handleSignOut }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
@@ -56,7 +56,7 @@ export function AppSidebar({ profile, handleSignOut }: AppSidebarProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <FaUser /> {profile?.full_name}
+                  <FaUser /> {username ?? "John Doe"}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>

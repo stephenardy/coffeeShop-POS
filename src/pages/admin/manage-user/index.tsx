@@ -1,106 +1,60 @@
 import type { GetServerSidePropsContext } from "next";
-import { createClient } from "@/utils/supabase/server-props";
+import { createClient as serverClient } from "@/utils/supabase/server-props";
+// import { createClient } from "@/utils/supabase/component";
+import { getUserRoleFromToken } from "@/lib/jwt";
 
 import AdminLayout from "@/components/layouts/AdminLayout/index";
 import ManageUser from "@/components/views/Admin/ManageUser";
 
 import { User } from "@supabase/supabase-js";
-
-export interface Profile {
-  current_role: string;
-  full_name: string;
-}
+// import { useEffect, useState } from "react";
 
 interface ManageUserProps {
   user: User;
-  profile: Profile | null;
 }
 
-const ManageUserPage = ({ user, profile }: ManageUserProps) => {
-  // const router = useRouter();
-  // const supabase = createBrowserClient();
+const ManageUserPage = ({ user }: ManageUserProps) => {
+  // const supabase = createClient();
 
-  // const [user, setUser] = useState<User | null>(null);
-  // const [profile, setProfile] = useState<Profile | null>(null);
+  // console.log(user);
+
+  // const [usersNoRole, setUserNoRole] = useState<string[] | null>(null);
 
   // useEffect(() => {
-  //   const getInitialSession = async () => {
-  //     // Check session
-  //     // const {
-  //     //   data: { session },
-  //     //   error: sessionError,
-  //     // } = await supabase.auth.getSession();
+  //   const fetchUser = async () => {
+  //     const { data, error: fetchError } = await supabase
+  //       .from("users")
+  //       .select("*");
 
-  //     // if (sessionError) {
-  //     //   console.error("Error fetching session:", sessionError.message);
-  //     //   return;
-  //     // }
-  //     // console.log(session);
-
-  //     // Get User data (auth.users)
-  //     const {
-  //       data: { user },
-  //       error: userError,
-  //     } = await supabase.auth.getUser();
-
-  //     if (userError) {
-  //       console.error("Error fetching user data:", userError.message);
-  //       await supabase.auth.signOut();
-  //       router.push("/auth/login");
-  //       return;
+  //     if (fetchError) {
+  //       console.error(fetchError.message);
   //     }
-  //     // setUser(user);
-  //     console.log(user);
 
-  //     // Get Profile data (public.profiles)
-  //     if (user) {
-  //       const { data: profileData, error: profileError } = await supabase
-  //         .from("profiles")
-  //         .select("current_role, full_name")
-  //         .eq("profile_id", user.id)
-  //         .single();
-
-  //       if (profileError && profileError.code !== "PGRST116") {
-  //         console.error("Error fetching user profile:", profileError.message);
-  //         return;
-  //       }
-
-  //       // Check role
-  //       if (profileData) {
-  //         setProfile(profileData);
-  //         if (profileData.current_role !== "admin") {
-  //           console.error("Only Admin can access this page");
-  //           await supabase.auth.signOut();
-  //           router.push("/auth/login");
-  //         }
-  //       } else {
-  //         console.warn("No profile found for user:", user.id);
-  //         await supabase.auth.signOut();
-  //         router.push("/auth/login");
-  //       }
-  //     }
+  //     return data;
   //   };
+  //   const userData = fetchUser();
+  //   console.log(userData);
+  // }, [supabase]);
 
-  //   getInitialSession();
-  // }, [router, supabase]);
-  console.log(user);
-  console.log(profile);
+  // console.log("user with no role: ", usersNoRole);
+
   return (
-    <AdminLayout profile={profile}>
+    <AdminLayout username={user.user_metadata?.full_name}>
       <ManageUser />
     </AdminLayout>
   );
 };
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const supabase = createClient(context);
+  const supabase = serverClient(context);
 
-  // get the authenticated user
+  // get the authenticated session || user
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
     return {
       redirect: {
         destination: "/auth/login",
@@ -109,23 +63,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  // get the user's profile from public.profiles
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("current_role, full_name")
-    .eq("profile_id", user.id)
-    .single();
+  // check user role
+  const userRole = getUserRoleFromToken(session.access_token);
 
-  if (profileError) {
+  if (userRole === null) {
     return {
       redirect: {
-        destination: "/auth/login?error=profile_not_found",
+        destination: "/auth/login?error=token_decode_failed",
         permanent: false,
       },
     };
   }
 
-  if (profile.current_role !== "admin") {
+  if (userRole !== "admin") {
     return {
       redirect: {
         destination: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/unauthorized`,
@@ -136,8 +86,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   return {
     props: {
-      user: user,
-      profile: profile,
+      user: session.user,
     },
   };
 }

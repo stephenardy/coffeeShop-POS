@@ -1,15 +1,14 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/fragments/Admin/AppSidebar";
-import { Profile } from "@/pages/admin/manage-user";
 import { createClient } from "@/utils/supabase/component";
 import { useRouter } from "next/navigation";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  profile: Profile | null;
+  username: string | null;
 }
 
-export default function AdminLayout({ children, profile }: AdminLayoutProps) {
+export default function AdminLayout({ children, username }: AdminLayoutProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -23,7 +22,7 @@ export default function AdminLayout({ children, profile }: AdminLayoutProps) {
   };
   return (
     <SidebarProvider>
-      <AppSidebar profile={profile} handleSignOut={handleSignOut} />
+      <AppSidebar username={username} handleSignOut={handleSignOut} />
       <main className="w-full">
         <SidebarTrigger />
         {children}
