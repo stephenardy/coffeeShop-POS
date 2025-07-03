@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  username: string | null;
+  username: string | null | undefined;
+  userRole: string;
 }
 
-export default function AdminLayout({ children, username }: AdminLayoutProps) {
+export default function AdminLayout({
+  children,
+  username,
+  userRole,
+}: AdminLayoutProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -22,7 +27,11 @@ export default function AdminLayout({ children, username }: AdminLayoutProps) {
   };
   return (
     <SidebarProvider>
-      <AppSidebar username={username} handleSignOut={handleSignOut} />
+      <AppSidebar
+        userRole={userRole}
+        username={username}
+        handleSignOut={handleSignOut}
+      />
       <main className="w-full">
         <SidebarTrigger />
         {children}

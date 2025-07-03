@@ -1,4 +1,6 @@
-import adminItems from "./Data/SidebarItem";
+import adminTabs from "@/data/AdminTabs";
+import managerTabs from "@/data/ManagerTabs";
+import crewTabs from "@/data/CrewTabs";
 
 import {
   Sidebar,
@@ -21,14 +23,18 @@ import {
 
 import { FaUser } from "react-icons/fa";
 import { ChevronUp } from "lucide-react";
-// import { Profile } from "@/pages/admin/manage-user";
 
 interface AppSidebarProps {
-  username: string | null;
+  userRole: string;
+  username: string | null | undefined;
   handleSignOut: () => Promise<void>;
 }
 
-export function AppSidebar({ username, handleSignOut }: AppSidebarProps) {
+export function AppSidebar({
+  username,
+  userRole,
+  handleSignOut,
+}: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
@@ -36,16 +42,44 @@ export function AppSidebar({ username, handleSignOut }: AppSidebarProps) {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {adminItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      {item.icon}
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+              {userRole === "admin" ? (
+                adminTabs.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url}>
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              ) : userRole === "manager" ? (
+                managerTabs.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url}>
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              ) : userRole === "crew" ? (
+                crewTabs.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url}>
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              ) : (
+                <SidebarMenuItem>
+                  <p>No Item</p>
                 </SidebarMenuItem>
-              ))}
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

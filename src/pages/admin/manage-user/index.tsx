@@ -3,17 +3,20 @@ import { createClient as serverClient } from "@/utils/supabase/server-props";
 // import { createClient } from "@/utils/supabase/component";
 import { getUserRoleFromToken } from "@/lib/jwt";
 
-import AdminLayout from "@/components/layouts/AdminLayout/index";
+import SidebarLayout from "@/components/layouts/SidebarLayout/index";
 import ManageUser from "@/components/views/Admin/ManageUser";
 
 import { User } from "@supabase/supabase-js";
+import { Profile } from "@/types/profiles";
 // import { useEffect, useState } from "react";
 
 interface ManageUserProps {
   user: User;
+  profile: Profile | null;
+  userRole: string;
 }
 
-const ManageUserPage = ({ user }: ManageUserProps) => {
+const ManageUserPage = ({ profile, userRole }: ManageUserProps) => {
   // const supabase = createClient();
 
   // console.log(user);
@@ -39,9 +42,9 @@ const ManageUserPage = ({ user }: ManageUserProps) => {
   // console.log("user with no role: ", usersNoRole);
 
   return (
-    <AdminLayout username={user.user_metadata?.full_name}>
+    <SidebarLayout userRole={userRole} username={profile?.full_name}>
       <ManageUser />
-    </AdminLayout>
+    </SidebarLayout>
   );
 };
 
@@ -84,9 +87,27 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // get the user's profile from public.profiles
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("profile_id", session.user.id)
+    .single();
+
+  if (profileError) {
+    return {
+      redirect: {
+        destination: "/auth/login?error=profile_not_found",
+        permanent: false,
+      },
+    };
+  }
+
   return {
     props: {
       user: session.user,
+      profile,
+      userRole,
     },
   };
 }

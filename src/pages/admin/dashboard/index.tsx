@@ -1,23 +1,21 @@
-import AdminLayout from "@/components/layouts/AdminLayout";
+import SidebarLayout from "@/components/layouts/SidebarLayout/index";
+import { getUserRoleFromToken } from "@/lib/jwt";
+import { Profile } from "@/types/profiles";
 import { createClient } from "@/utils/supabase/server-props";
 import { User } from "@supabase/supabase-js";
 import { GetServerSidePropsContext } from "next";
 
-export interface Profile {
-  current_role: string;
-  full_name: string;
-}
-
 interface dashboardAdminProps {
   user: User;
   profile: Profile | null;
+  userRole: string;
 }
 
-const AdminDashboardPage = ({ profile }: dashboardAdminProps) => {
+const AdminDashboardPage = ({ profile, userRole }: dashboardAdminProps) => {
   return (
-    <AdminLayout profile={profile}>
+    <SidebarLayout userRole={userRole} username={profile?.full_name}>
       <h1>THis is dashboard</h1>
-    </AdminLayout>
+    </SidebarLayout>
   );
 };
 
@@ -26,12 +24,13 @@ export default AdminDashboardPage;
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context);
 
-  // get the authenticated user
+  // get the authenticated session || user
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError || !user) {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
     return {
       redirect: {
         destination: "/auth/login",
@@ -40,11 +39,32 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // check user role
+  const userRole = getUserRoleFromToken(session.access_token);
+
+  if (userRole === null) {
+    return {
+      redirect: {
+        destination: "/auth/login?error=token_decode_failed",
+        permanent: false,
+      },
+    };
+  }
+
+  if (userRole !== "admin") {
+    return {
+      redirect: {
+        destination: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/unauthorized`,
+        permanent: false,
+      },
+    };
+  }
+
   // get the user's profile from public.profiles
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("current_role, full_name")
-    .eq("profile_id", user.id)
+    .select("full_name")
+    .eq("profile_id", session.user.id)
     .single();
 
   if (profileError) {
@@ -56,18 +76,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  if (profile.current_role !== "admin") {
-    return {
-      redirect: {
-        destination: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/unauthorized`,
-        permanent: false,
-      },
-    };
-  }
-
   return {
     props: {
-      user: user,
+      userRole,
+      user: session.user,
       profile: profile,
     },
   };

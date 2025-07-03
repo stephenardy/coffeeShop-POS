@@ -2,7 +2,7 @@ import { MdSpaceDashboard } from "react-icons/md";
 import { FaUserCog } from "react-icons/fa";
 import { FaPersonCircleCheck } from "react-icons/fa6";
 
-const adminItems = [
+const adminTabs = [
   {
     title: "Dashboard",
     url: "/admin/dashboard",
@@ -20,4 +20,4 @@ const adminItems = [
   },
 ];
 
-export default adminItems;
+export default adminTabs;
