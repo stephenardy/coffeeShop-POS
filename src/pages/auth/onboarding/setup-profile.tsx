@@ -59,13 +59,13 @@ const SetupProfilePage = () => {
     // reference: https://supabase.com/docs/reference/javascript/auth-updateuser
 
     const {
-      // data: { user },
+      data: { user },
       error: authError,
     } = await supabase.auth.updateUser({
       password,
-      data: {
-        full_name: fullName,
-      },
+      // data: {
+      //   full_name: fullName,
+      // },
     });
 
     if (authError) {
@@ -73,17 +73,16 @@ const SetupProfilePage = () => {
       return;
     }
 
-    // Insert user profile (public.profiles)
-    // const { error } = await supabase.from("profiles").insert({
-    //   profile_id: user?.id,
-    //   full_name: fullName,
-    //   status: "inactive",
-    // });
+    // Update user profile (public.profiles)
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName })
+      .eq("profile_id", user?.id);
 
-    // if (error) {
-    //   setError(error.message);
-    //   return;
-    // }
+    if (profileError) {
+      setError(profileError.message);
+      return;
+    }
 
     setError("");
     router.push("/auth/onboarding/success");
