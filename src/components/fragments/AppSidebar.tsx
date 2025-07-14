@@ -19,27 +19,36 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 
 import { FaUser } from "react-icons/fa";
 import { ChevronUp } from "lucide-react";
+import { useRouter } from "next/router";
+import { createClient } from "@/utils/supabase/component";
 
 interface AppSidebarProps {
   userRole: string;
   username: string | null | undefined;
-  handleSignOut: () => Promise<void>;
 }
 
-export function AppSidebar({
-  username,
-  userRole,
-  handleSignOut,
-}: AppSidebarProps) {
+export function AppSidebar({ username, userRole }: AppSidebarProps) {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error Logging Out", error.message);
+      return;
+    }
+    router.push("/auth/login");
+  };
+
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="text-sidebar-foreground">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>POS Coffee Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {userRole === "admin" ? (

@@ -3,47 +3,39 @@ import { createClient as serverClient } from "@/utils/supabase/server-props";
 // import { createClient } from "@/utils/supabase/component";
 import { getUserRoleFromToken } from "@/lib/jwt";
 
-import SidebarLayout from "@/components/layouts/SidebarLayout/index";
+import SidebarLayout from "@/components/layouts/ManagerLayout/index";
 import ManageUser from "@/components/views/Admin/ManageUser";
 
 import { User } from "@supabase/supabase-js";
-import { Profile } from "@/types/profiles";
+import { Profile, UserRole } from "@/types/profiles";
+import { useEffect, useState } from "react";
 // import { useEffect, useState } from "react";
 
 interface ManageUserProps {
   user: User;
-  profile: Profile | null;
+  profile: Pick<Profile, "full_name"> | null;
   userRole: string;
+  allProfile: Profile[];
+  allRole: UserRole[];
 }
 
-const ManageUserPage = ({ profile, userRole }: ManageUserProps) => {
-  // const supabase = createClient();
+const ManageUserPage = ({
+  profile,
+  userRole,
+  allProfile,
+  allRole,
+}: ManageUserProps) => {
+  const [profiles, setProfiles] = useState<Profile[] | null>(null);
+  const [roles, setRoles] = useState<UserRole[] | null>(null);
 
-  // console.log(user);
-
-  // const [usersNoRole, setUserNoRole] = useState<string[] | null>(null);
-
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     const { data, error: fetchError } = await supabase
-  //       .from("users")
-  //       .select("*");
-
-  //     if (fetchError) {
-  //       console.error(fetchError.message);
-  //     }
-
-  //     return data;
-  //   };
-  //   const userData = fetchUser();
-  //   console.log(userData);
-  // }, [supabase]);
-
-  // console.log("user with no role: ", usersNoRole);
+  useEffect(() => {
+    setProfiles(allProfile);
+    setRoles(allRole);
+  }, [allProfile, allRole]);
 
   return (
     <SidebarLayout userRole={userRole} username={profile?.full_name}>
-      <ManageUser />
+      <ManageUser profiles={profiles} roles={roles} />
     </SidebarLayout>
   );
 };
@@ -103,11 +95,34 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // get the all user's profile from public.profiles
+  const { data: allProfile, error: allProfileError } = await supabase
+    .from("profiles")
+    .select("*");
+
+  if (allProfileError) {
+    console.error("fail to fetch profiles data", allProfileError.message);
+  }
+
+  // get the all user's role from public.user_roles
+  const { data: allRole, error: allRoleError } = await supabase
+    .from("user_roles")
+    .select("user_id, role");
+
+  if (allRoleError) {
+    console.error("fail to fetch roles data", allRoleError.message);
+  }
+
+  console.log("allRole:", allRole);
+  console.log("allRoleError:", allRoleError);
+
   return {
     props: {
       user: session.user,
       profile,
       userRole,
+      allProfile,
+      allRole,
     },
   };
 }

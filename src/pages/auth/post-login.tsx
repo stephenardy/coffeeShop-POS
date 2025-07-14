@@ -67,15 +67,33 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const userRole = getUserRoleFromToken(session.access_token);
+  let userRole = getUserRoleFromToken(session.access_token);
+
+  if (!userRole) {
+    console.log("No role in token, querying database as a fallback...");
+    const { data: roleData, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (roleError) {
+      console.error(roleError.message);
+    }
+
+    // console.log(roleData);
+
+    userRole = roleData?.role;
+    // console.log("roleData:", roleData);
+  }
 
   const destination =
     userRole === "admin"
       ? "/admin/dashboard"
       : userRole === "manager"
-      ? "/manager/dashboard"
-      : userRole === "cashier"
-      ? "/cashier/dashboard"
+      ? "/manager/"
+      : userRole === "crew"
+      ? "/crew/"
       : "/auth/no-role";
 
   return {

@@ -4,12 +4,12 @@ import { FaUserCog } from "react-icons/fa";
 const crewTabs = [
   {
     title: "Menus",
-    url: "/admin/dashboard",
+    url: "/crew",
     icon: <MdSpaceDashboard />,
   },
   {
     title: "Create Orders",
-    url: "/admin/manage-user",
+    url: "/crew/create-orders",
     icon: <FaUserCog />,
   },
 ];

@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
+import { getUserRoleFromToken } from "@/lib/jwt";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please input correct email" }),
@@ -45,10 +46,39 @@ const LoginPage = () => {
     if (error) {
       console.error("Login failed:", error.message);
       return;
-    } else {
-      // console.log(data);
-      router.push("/auth/post-login");
     }
+    // Try refreshing the session to get updated claims
+    const { data: refreshData, error: refreshError } =
+      await supabase.auth.refreshSession();
+
+    if (refreshError) {
+      console.error("Session refresh failed:", refreshError.message);
+    }
+
+    // Check the new token
+    let userRole = null;
+    if (refreshData.session) {
+      console.log("Session refreshed, checking token...");
+      userRole = getUserRoleFromToken(refreshData.session.access_token);
+      console.log("User role after refresh:", userRole);
+    }
+
+    // // Wait for session to be available
+    // let tries = 0;
+    // let session = null;
+    // while (tries < 5 && !session) {
+    //   const { data } = await supabase.auth.getSession();
+    //   session = data.session;
+    //   if (!session) await new Promise((res) => setTimeout(res, 200));
+    //   tries++;
+    // }
+
+    // if (!session) {
+    //   console.error("Session not available after login.");
+    //   return;
+    // }
+
+    router.push("/auth/post-login");
   };
 
   const handleReset = async (values: z.infer<typeof formSchema>) => {

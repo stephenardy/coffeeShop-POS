@@ -1,25 +1,58 @@
-import SidebarLayout from "@/components/layouts/SidebarLayout/index";
+import SidebarLayout from "@/components/layouts/ManagerLayout/index";
 import { getUserRoleFromToken } from "@/lib/jwt";
+// import { withAdminAccess } from "@/lib/withAdminAccess";
 import { Profile } from "@/types/profiles";
 import { createClient } from "@/utils/supabase/server-props";
 import { User } from "@supabase/supabase-js";
 import { GetServerSidePropsContext } from "next";
+// import { GetServerSideProps} from "next";
 
 interface dashboardAdminProps {
   user: User;
-  profile: Profile | null;
+  profile: Pick<Profile, "full_name"> | null;
   userRole: string;
 }
 
 const AdminDashboardPage = ({ profile, userRole }: dashboardAdminProps) => {
   return (
-    <SidebarLayout userRole={userRole} username={profile?.full_name}>
+    <SidebarLayout username={profile?.full_name} userRole={userRole}>
       <h1>THis is dashboard</h1>
     </SidebarLayout>
   );
 };
 
 export default AdminDashboardPage;
+
+// export const getServerSideProps = requireAdmin;
+
+// export const getServerSideProps = withAdminAccess(async (context) => {
+//   const supabase = createClient(context);
+
+//   // get userId from requireAdmin props
+//   const userId = (context as any).userId;
+
+//   // get profile
+//   const { data: profile, error: profileError } = await supabase
+//     .from("profiles")
+//     .select("full_name")
+//     .eq("profile_id", userId)
+//     .single();
+
+//   if (profileError) {
+//     return {
+//       redirect: {
+//         destination: "/auth/login?error=profile_not_found",
+//         permanent: false,
+//       },
+//     };
+//   }
+
+//   return {
+//     props: {
+//       profile,
+//     },
+//   };
+// });
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const supabase = createClient(context);

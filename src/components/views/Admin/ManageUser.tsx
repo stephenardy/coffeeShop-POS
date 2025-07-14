@@ -50,17 +50,19 @@ import { toast } from "sonner";
 
 import { createClient } from "@/utils/supabase/component";
 import { useState } from "react";
+import { Profile, UserRole } from "@/types/profiles";
 // import { User } from "@supabase/supabase-js";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please input correct email" }),
 });
 
-// interface ManageUserViewProps {
-//   user: User;
-// }
+interface ManageUserViewProps {
+  profiles: Profile[] | null;
+  roles: UserRole[] | null;
+}
 
-const ManageUser = () => {
+const ManageUser = ({ profiles, roles }: ManageUserViewProps) => {
   const supabase = createClient();
 
   const [error, setError] = useState("");
@@ -96,8 +98,6 @@ const ManageUser = () => {
       if (invitationError) {
         setError(invitationError.message);
         return;
-      } else {
-        console.log("email successfully sent");
       }
 
       setDialogOpen(false);
@@ -106,6 +106,9 @@ const ManageUser = () => {
       setIsLoading(false);
     }
   };
+
+  console.log("profiles:", profiles);
+  console.log("roles:", roles);
 
   return (
     <div className="containter w-full pt-8 px-8">
@@ -178,7 +181,7 @@ const ManageUser = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead>No</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
@@ -187,31 +190,46 @@ const ManageUser = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>A</TableCell>
-              <TableCell>B</TableCell>
-              <TableCell>A</TableCell>
-              <TableCell>C</TableCell>
-              <TableCell>K</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild className="cursor-pointer">
-                    <Ellipsis />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel className="font-bold">
-                      Action
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>Edit Profile</DropdownMenuItem>
-                      <DropdownMenuItem>Change Role</DropdownMenuItem>
-                      <DropdownMenuItem>Change Status</DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
+            {profiles === null ? (
+              <TableRow>
+                <TableCell>No profiles fetched</TableCell>
+              </TableRow>
+            ) : (
+              profiles.map((profile, index) => {
+                const matchedRole = roles?.find(
+                  (role) => role.user_id === profile.profile_id
+                );
+                return (
+                  <TableRow key={profile.profile_id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{profile.full_name ?? "null"}</TableCell>
+                    <TableCell>{profile.email}</TableCell>
+                    <TableCell>
+                      {matchedRole?.role ?? "no role assigned"}
+                    </TableCell>
+                    <TableCell>K</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild className="cursor-pointer">
+                          <Ellipsis />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56">
+                          <DropdownMenuLabel className="font-bold">
+                            Action
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>Edit Profile</DropdownMenuItem>
+                            <DropdownMenuItem>Change Role</DropdownMenuItem>
+                            <DropdownMenuItem>Change Status</DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </div>

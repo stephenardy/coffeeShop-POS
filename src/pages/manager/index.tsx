@@ -1,13 +1,14 @@
-import AdminLayout from "@/components/layouts/SidebarLayout";
+// This is Manager Dashboard
+import SidebarLayout from "@/components/layouts/ManagerLayout/index";
 
-const ManagerPage = () => {
+const ManagerDashboardPage = () => {
   return (
-    <AdminLayout>
+    <SidebarLayout username="John Thor">
       <div>
         <h1>THis is Manager Page</h1>
       </div>
-    </AdminLayout>
+    </SidebarLayout>
   );
 };
 
-export default ManagerPage;
+export default ManagerDashboardPage;

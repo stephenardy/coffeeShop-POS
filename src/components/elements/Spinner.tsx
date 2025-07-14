@@ -1,7 +1,7 @@
 const Spinner = () => {
   return (
-    <div className="flex items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-transparent"></div>
+    <div className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 shadow-sm">
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-transparent"></div>
     </div>
   );
 };
