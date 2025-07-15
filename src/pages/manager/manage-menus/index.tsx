@@ -23,7 +23,7 @@ const ManagerManageMenusPage = () => {
     const { data, error } = await supabase
       .from("menus")
       .select("*")
-      .order("id", { ascending: true });
+      .order("id", { ascending: false });
 
     if (error) {
       console.error(error.message);

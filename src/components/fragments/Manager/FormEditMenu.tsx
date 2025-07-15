@@ -1,4 +1,3 @@
-import { FaRegEdit } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -9,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 import { useForm } from "react-hook-form";
@@ -29,10 +27,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/component";
 import { toast } from "sonner";
-import { useState } from "react";
+import { Dispatch, useEffect, useState } from "react";
 import { AlertCircleIcon } from "lucide-react";
 import Spinner from "@/components/elements/Spinner";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Menus } from "@/pages/manager/manage-menus";
 
 const formSchema = z.object({
   name: z.string().transform((val) => val.trim().replace(/\s+/g, " ")),
@@ -52,119 +50,160 @@ const formSchema = z.object({
 });
 
 interface PropsTypes {
+  openEditDialog: boolean;
+  setOpenEditDialog: Dispatch<React.SetStateAction<boolean>>;
+  menu: Menus;
   fetchMenus: () => Promise<void>;
-  menuId: string;
 }
 
-const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
+const FormEditMenu = ({
+  openEditDialog,
+  setOpenEditDialog,
+  menu,
+  fetchMenus,
+}: PropsTypes) => {
   const supabase = createClient();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [categoryInput, setCategoryInput] = useState(
+    menu.categories?.join(", ") || ""
+  );
 
-  const formInsert = useForm<z.infer<typeof formSchema>>({
+  const formEdit = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      price: 0,
-      description: "",
-      categories: [],
+      name: menu.name,
+      price: menu.price,
+      description: menu.description,
+      categories: menu.categories || [],
       image: undefined,
     },
   });
 
-  //   const uploadImage = async (file: File) => {
-  //     const nameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
-  //     const extension = file.name.split(".").pop();
-  //     const filePath = `${nameWithoutExtension}_${Date.now()}.${extension}`;
+  useEffect(() => {
+    setCategoryInput(menu.categories?.join(", ") || "");
+    formEdit.setValue("categories", menu.categories || []);
+  }, [menu]);
 
-  //     const { data, error } = await supabase.storage
-  //       .from("menu-images")
-  //       .upload(filePath, file, {
-  //         cacheControl: "3600",
-  //         upsert: false, //true means you will overwrite if there is existing file with the same name (means you need an "update"   policy for the user)
-  //       });
+  const uploadImage = async (file: File) => {
+    const nameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
+    const extension = file.name.split(".").pop();
+    const filePath = `${nameWithoutExtension}_${Date.now()}.${extension}`;
 
-  //     if (error) {
-  //       setError(`Upload image to bucket failed: ${error.message}`);
-  //       return;
-  //     }
+    const { data, error } = await supabase.storage
+      .from("menu-images")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false, //true means you will overwrite if there is existing file with the same name (means you need an "update"   policy for the user)
+      });
 
-  //     return data.path;
-  //   };
+    if (error) {
+      setError(`Upload image to bucket failed: ${error.message}`);
+      return;
+    }
 
-  //   const getPublicImageUrl = (path: string) => {
-  //     const { data } = supabase.storage.from("menu-images").getPublicUrl(path);
+    return data.path;
+  };
 
-  //     return data.publicUrl;
-  //   };
+  const getPublicImageUrl = (path: string) => {
+    const { data } = supabase.storage.from("menu-images").getPublicUrl(path);
 
-  //   const handleAddMenu = async (values: z.infer<typeof formSchema>) => {
-  //     try {
-  //       setIsLoading(true);
+    return data.publicUrl;
+  };
 
-  //       if (values.image) {
-  //         const path = await uploadImage(values.image);
+  const getImagePath = (publicUrl: string) => {
+    let imagePath = publicUrl.replace(
+      "https://hxjpymtjxigrxgtvchdv.supabase.co/storage/v1/object/public/menu-images/",
+      ""
+    );
 
-  //         if (!path) {
-  //           setError("Image upload failed");
-  //           return;
-  //         }
+    if (imagePath.startsWith("/")) {
+      imagePath = imagePath.slice(1);
+    }
 
-  //         const image_url = getPublicImageUrl(path);
-  //       }
+    return imagePath;
+  };
 
-  //       const newMenu = {
-  //         name: values.name,
-  //         price: values.price,
-  //         description: values.description,
-  //         categories: values.categories,
-  //         image_url,
-  //       };
+  const handleEditMenu = async (values: z.infer<typeof formSchema>) => {
+    try {
+      setIsLoading(true);
+      setError("");
 
-  //       const { error: menusError } = await supabase
-  //         .from("menus")
-  //         .insert(newMenu);
+      let imageUrl = menu.image_url;
 
-  //       if (menusError) {
-  //         setError(`Insert new menu failed, ${menusError.message}`);
-  //       }
+      if (values.image) {
+        // upload new image
+        const imagePath = await uploadImage(values.image);
+        if (imagePath) {
+          imageUrl = getPublicImageUrl(imagePath);
 
-  //       toast("New menu added!");
-  //       formInsert.reset();
-  //       setDialogOpen(false);
-  //       await fetchMenus();
-  //     } catch (err) {
-  //       console.error(`something went wrong. Please try again. ${err}`);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
+          // delete old image
+          const old_image = getImagePath(menu.image_url);
+
+          const { error: removeImageError } = await supabase.storage
+            .from("menu-images")
+            .remove([old_image]);
+
+          if (removeImageError) {
+            console.error(
+              "failed removing image from bucket: ",
+              removeImageError.message
+            );
+            return;
+          }
+        } else {
+          setError("Failed to upload image.");
+        }
+      }
+
+      const updatedMenu = {
+        name: values.name,
+        price: values.price,
+        description: values.description,
+        categories: values.categories,
+        image_url: imageUrl,
+      };
+
+      const { data, error } = await supabase
+        .from("menus")
+        .update(updatedMenu)
+        .eq("id", menu.id);
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      console.log(data);
+
+      await fetchMenus();
+      toast.success("Menu updated successfully!");
+      setOpenEditDialog(false);
+    } catch (err) {
+      setError(`Something went wrong. Please try again! -> ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <>
-            <FaRegEdit />
-            <p>Edit</p>
-          </>
-        </DialogTrigger>
-
+      <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Menu</DialogTitle>
-            <DialogDescription>What{"'"}s the new menu?</DialogDescription>
+            <DialogTitle>Edit Menu</DialogTitle>
+            <DialogDescription>
+              What{"'"}s new about this menu?
+            </DialogDescription>
           </DialogHeader>
 
-          <Form {...formInsert}>
+          <Form {...formEdit}>
             <form
               className="space-y-4"
-              //   onSubmit={formInsert.handleSubmit(handleAddMenu)}
+              onSubmit={formEdit.handleSubmit(handleEditMenu)}
             >
               <FormField
-                control={formInsert.control}
+                control={formEdit.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -177,7 +216,7 @@ const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
                 )}
               />
               <FormField
-                control={formInsert.control}
+                control={formEdit.control}
                 name="price"
                 render={({ field }) => (
                   <FormItem>
@@ -195,7 +234,7 @@ const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
                 )}
               />
               <FormField
-                control={formInsert.control}
+                control={formEdit.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
@@ -208,7 +247,7 @@ const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
                 )}
               />
               <FormField
-                control={formInsert.control}
+                control={formEdit.control}
                 name="categories"
                 render={({ field }) => (
                   <FormItem>
@@ -216,13 +255,16 @@ const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
                     <FormControl>
                       <Input
                         placeholder="e.g. coffee, cold, sweet"
-                        // value={field.value.join(", ") || ""}
+                        value={categoryInput}
                         onChange={(e) => {
-                          const value = e.target.value;
-                          const array = value
+                          const inputValue = e.target.value;
+                          setCategoryInput(inputValue);
+
+                          const array = inputValue
                             .split(",")
                             .map((item) => item.trim())
                             .filter((item) => item !== "");
+
                           field.onChange(array);
                         }}
                       />
@@ -232,11 +274,11 @@ const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
                 )}
               />
               <FormField
-                control={formInsert.control}
+                control={formEdit.control}
                 name="image"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Upload Image</FormLabel>
+                    <FormLabel>Upload Image (optional)</FormLabel>
                     <FormControl>
                       <>
                         <Input
@@ -286,13 +328,13 @@ const FormEditMenu = ({ fetchMenus, menuId }: PropsTypes) => {
         </DialogContent>
       </Dialog>
       {error !== "" && (
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>{error}</AlertTitle>
-          <AlertDescription>
-            You can add components and dependencies to your app using the cli.
-          </AlertDescription>
-        </Alert>
+        <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm">
+          <Alert variant="destructive">
+            <AlertCircleIcon className="h-5 w-5" />
+            <AlertTitle>Error!</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
       )}
     </>
   );

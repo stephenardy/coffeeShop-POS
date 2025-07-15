@@ -16,6 +16,7 @@ interface PropsTypes {
 const ManageMenus = (props: PropsTypes) => {
   const { menus, fetchMenus } = props;
 
+  // Search and Pagination
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 

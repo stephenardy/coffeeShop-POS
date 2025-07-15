@@ -280,13 +280,13 @@ const FormAddMenu = ({ fetchMenus }: PropsTypes) => {
         </DialogContent>
       </Dialog>
       {error !== "" && (
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>{error}</AlertTitle>
-          <AlertDescription>
-            You can add components and dependencies to your app using the cli.
-          </AlertDescription>
-        </Alert>
+        <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm">
+          <Alert variant="destructive">
+            <AlertCircleIcon className="h-5 w-5" />
+            <AlertTitle>Error!</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
       )}
     </>
   );
