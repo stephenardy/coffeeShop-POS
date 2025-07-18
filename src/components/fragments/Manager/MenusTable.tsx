@@ -25,6 +25,7 @@ import { useState } from "react";
 import { MdDelete } from "react-icons/md";
 import { createClient } from "@/utils/supabase/component";
 import FormEditMenu from "./FormEditMenu";
+import Preview from "../Preview";
 
 interface PropsTypes {
   menus: Menus[];
@@ -38,6 +39,7 @@ const MenusTable = (props: PropsTypes) => {
 
   const { menus, itemsPerPage, currentPage, fetchMenus } = props;
 
+  const [openPreview, setOpenPreview] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
@@ -84,16 +86,22 @@ const MenusTable = (props: PropsTypes) => {
   };
 
   return (
-    <>
-      <Table>
+    <div className="w-full overflow-x-auto rounded-md bg-background">
+      <Table className="min-w-[800px] text-sm md:text-base">
         <TableHeader>
           <TableRow className="text-foreground [&>th:first-child]:rounded-tl-md [&>th:last-child]:rounded-tr-md">
-            <TableHead className="font-medium">No</TableHead>
-            <TableHead></TableHead>
-            <TableHead className="font-medium">Name</TableHead>
-            <TableHead className="font-medium">Price</TableHead>
-            <TableHead className="font-medium">Category</TableHead>
-            <TableHead className="font-medium">Description</TableHead>
+            <TableHead className="font-medium whitespace-nowrap">No</TableHead>
+            <TableHead className="w-[72px]"></TableHead>
+            <TableHead className="font-medium whitespace-nowrap">
+              Name
+            </TableHead>
+            <TableHead className="font-medium whitespace-nowrap">
+              Price
+            </TableHead>
+            <TableHead className="font-medium whitespace-nowrap">
+              Category
+            </TableHead>
+            <TableHead className="font-medium w-[280px]">Description</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -113,28 +121,34 @@ const MenusTable = (props: PropsTypes) => {
                     className="rounded-md object-cover border border-border"
                   />
                 </TableCell>
-                <TableCell>{menu.name}</TableCell>
+                <TableCell className="whitespace-nowrap">{menu.name}</TableCell>
                 <TableCell>$ {menu.price}</TableCell>
                 <TableCell>
-                  <p className="text-wrap">{menu.categories.join(", ")}</p>
+                  <p className="whitespace-normal">
+                    {menu.categories.join(", ")}
+                  </p>
                 </TableCell>
                 <TableCell>
-                  <p className="w-64 text-wrap line-clamp-3">
-                    {menu.description}
-                  </p>
+                  <p className="text-wrap line-clamp-3">{menu.description}</p>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild className="cursor-pointer">
                       <Ellipsis />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56">
+                    <DropdownMenuContent className="w-45">
                       <DropdownMenuLabel className="font-bold">
                         Action
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        <DropdownMenuItem className="cursor-pointer">
+                        <DropdownMenuItem
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setOpenPreview(true);
+                            setSelectedMenu(menu);
+                          }}
+                        >
                           <FaEye />
                           <p>Preview</p>
                         </DropdownMenuItem>
@@ -168,11 +182,19 @@ const MenusTable = (props: PropsTypes) => {
             ))
           ) : (
             <TableRow>
-              <TableCell>No data returned</TableCell>
+              <TableCell colSpan={7}>No data returned</TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
+
+      {openPreview && selectedMenu && (
+        <Preview
+          menu={selectedMenu}
+          openPreview={openPreview}
+          setOpenPreview={setOpenPreview}
+        />
+      )}
 
       {openDeleteDialog && selectedMenu && (
         <DialogDeleteMenu
@@ -191,7 +213,7 @@ const MenusTable = (props: PropsTypes) => {
           fetchMenus={fetchMenus}
         />
       )}
-    </>
+    </div>
   );
 };
 

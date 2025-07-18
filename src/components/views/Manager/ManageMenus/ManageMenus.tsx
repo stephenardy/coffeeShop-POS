@@ -51,7 +51,7 @@ const ManageMenus = (props: PropsTypes) => {
   return (
     <>
       <div className="min-h-screen flex flex-col">
-        <div className="flex justify-between mb-2 items-center">
+        <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4 items-center">
           <SearchBar
             query={query}
             setQuery={setQuery}
@@ -67,7 +67,7 @@ const ManageMenus = (props: PropsTypes) => {
             fetchMenus={fetchMenus}
           />
         </div>
-        <div className="sticky bottom-0 w-full bg-background">
+        <div className="sticky bottom-0 left-0 w-full bg-background px-4 py-3">
           <PaginationElements
             totalPages={totalPages}
             currentPage={currentPage}
