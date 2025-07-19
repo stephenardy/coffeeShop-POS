@@ -1,5 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/fragments/AppSidebar";
+import { useRouter } from "next/router";
+import { getPageHead } from "@/utils/path/getPageHead";
 // import { createClient as serverClient } from "@/utils/supabase/server-props";
 // import { GetServerSidePropsContext } from "next";
 
@@ -14,6 +16,8 @@ export default function AdminLayout({
   username,
 }: // userRole,
 AdminLayoutProps) {
+  const router = useRouter();
+  const title = getPageHead(router.pathname);
   return (
     <SidebarProvider>
       <AppSidebar
@@ -21,8 +25,12 @@ AdminLayoutProps) {
         userRole="admin"
         username={username}
       />
-      <main className="w-full">
-        <SidebarTrigger />
+      <main className="w-full container mx-2 mt-2 bg-background">
+        <div className="flex flex-row items-center">
+          <SidebarTrigger />
+          <h3>{title}</h3>
+        </div>
+        <div className="border-1 rounded-2xl mt-1 mb-4" />
         {children}
       </main>
     </SidebarProvider>
